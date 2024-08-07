@@ -1,18 +1,20 @@
-/**
- * Welcome to Cloudflare Workers! This is your first worker.
- *
- * - Run `npm run dev` in your terminal to start a development server
- * - Open a browser tab at http://localhost:8787/ to see your worker in action
- * - Run `npm run deploy` to publish your worker
- *
- * Bind resources to your worker in `wrangler.toml`. After adding bindings, a type definition for the
- * `Env` object can be regenerated with `npm run cf-typegen`.
- *
- * Learn more at https://developers.cloudflare.com/workers/
- */
+import { AutoRouter, type IRequest } from "itty-router";
 
-export default {
-	async fetch(request, env, ctx): Promise<Response> {
-		return new Response('Hello World!');
-	},
-} satisfies ExportedHandler<Env>;
+const redirect = (path: string, env: Env, status = 301) =>
+  new Response(undefined, {
+    status,
+    headers: {
+      Location: `${env.DISCOHOOK_ORIGIN}${path}`,
+    },
+  });
+
+const to = (path: string) => (_: IRequest, env: Env) => redirect(path, env);
+
+const router = AutoRouter()
+  .get("/scheduler/*", to("/guide/deprecated/discoscheduler"))
+  .get("/invite", to("/bot"))
+  .get("/support", to("/discord"))
+  .get("/bot/formatting", to("/guide/getting-started/formatting"))
+  .get("*", to("/guide/deprecated/migrate-utils"));
+
+export default router;
